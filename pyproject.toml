@@ -1,0 +1,40 @@
+[project]
+name = "pybi-next"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "CrystalWindSnake", email = "568166495@qq.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "instaui[web]",
+]
+
+[project.scripts]
+pybi-next = "pybi_next:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+instaui = { path = "../instaui-repo/instaui", editable = true }
+
+[[tool.uv.index]]
+url = "https://repo.huaweicloud.com/repository/pypi/simple/"
+default = true
+
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pybi"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/pybi"]
+
+[dependency-groups]
+dev = [
+    "duckdb>=1.2.2",
+    "pandas>=2.2.3",
+]
