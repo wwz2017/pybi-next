@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 from ._mixin import DataSetMixin
 
 
@@ -14,4 +14,10 @@ def store_data_set(data_set: DataSetMixin) -> int:
 
 
 def get_data_set(id: int):
+    return _DATA_SET_MAP[id]
+
+
+def try_get_data_set(id: Optional[int]):
+    if id is None:
+        return None
     return _DATA_SET_MAP[id]

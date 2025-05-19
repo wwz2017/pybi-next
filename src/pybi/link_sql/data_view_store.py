@@ -1,7 +1,9 @@
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, Set
 from instaui import ui
 from collections import defaultdict
+
+from pybi.link_sql import _utils
 
 
 if TYPE_CHECKING:
@@ -49,3 +51,20 @@ class DataViewStore(ui.element):
     def _to_json_dict(self):
         self.data._ref_.value = self._org_data  # type: ignore
         return super()._to_json_dict()
+
+
+def get_dependency_views(sql: str):
+    stack = [
+        DataViewStore.get().get_data_view(name)
+        for name in _utils.extract_special_tags(sql)
+    ]
+
+    result: Set[DataView] = set(stack)
+
+    while stack:
+        view = stack.pop()
+        result.add(view)
+
+        stack.extend(get_dependency_views(view.sql_str))
+
+    return list(result)

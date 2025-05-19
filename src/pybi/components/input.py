@@ -3,10 +3,6 @@ from typing_extensions import Unpack
 from instaui import arco, ui
 from instaui.arco import component_types
 
-from pybi.link_sql.protocols import (
-    DataColumnProtocol,
-    is_data_column,
-)
 
 _DEFAULT_PROPS = {
     "allow-clear": True,
@@ -14,7 +10,7 @@ _DEFAULT_PROPS = {
 
 
 def input(
-    data_column: DataColumnProtocol,
+    data_column,
     *,
     value: typing.Optional[ui.TMaybeRef[str]] = None,
     **kwargs: Unpack[component_types.TInput],

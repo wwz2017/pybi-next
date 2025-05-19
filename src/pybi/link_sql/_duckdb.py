@@ -53,9 +53,12 @@ class DuckdbFileDataSet(DataSetMixin):
     def query(self, sql: str, params: Optional[List] = None):
         local_con = self._conn.cursor()
 
-        query = local_con.sql(sql, params=params)
-        columns = query.columns
-        values = query.fetchall()
+        try:
+            query = local_con.sql(sql, params=params)
+            columns = query.columns
+            values = query.fetchall()
+        except duckdb.ParserException as e:
+            raise ValueError(f"Invalid SQL: {sql}") from e
 
         return DataSetQueryInfo(columns=columns, values=values)
 

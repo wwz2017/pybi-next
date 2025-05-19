@@ -1,18 +1,36 @@
 [project]
 name = "pybi-next"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "pybi-next is effortless BI Data Visualization Reports with Python."
+keywords = ["ui", "gui", "web", "visualization", "reporting", "data-analysis"]
+Repository = "https://github.com/CrystalWindSnake/pybi-next"
+Issues = "https://github.com/CrystalWindSnake/pybi-next/issues"
+license = "MIT"
 readme = "README.md"
 authors = [
     { name = "CrystalWindSnake", email = "568166495@qq.com" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.8,<3.13"
 dependencies = [
-    "instaui[web]",
+    "instaui",
 ]
 
-[project.scripts]
-pybi-next = "pybi_next:main"
+[dependency-groups]
+dev = [
+    "instaui[web]",
+    "duckdb>=1.2.2",
+    "pandas >= 1.3.4, <2.2.3 ; python_version < '3.9'",
+    "pandas >= 2.2.3 ; python_version >= '3.9'",
+]
+lint = [
+    "ruff>=0.11.8",
+]
+
+[project.optional-dependencies]
+web = ["instaui[web]","duckdb>=1.2.2"]
+webview = ["instaui[webview]"]
+all = ["instaui[all]"]
+
 
 [build-system]
 requires = ["hatchling"]
@@ -20,10 +38,6 @@ build-backend = "hatchling.build"
 
 [tool.uv.sources]
 instaui = { path = "../instaui-repo/instaui", editable = true }
-
-[[tool.uv.index]]
-url = "https://repo.huaweicloud.com/repository/pypi/simple/"
-default = true
 
 
 
@@ -33,8 +47,3 @@ packages = ["src/pybi"]
 [tool.hatch.build.targets.sdist]
 only-include = ["src/pybi"]
 
-[dependency-groups]
-dev = [
-    "duckdb>=1.2.2",
-    "pandas>=2.2.3",
-]
