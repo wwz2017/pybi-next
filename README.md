@@ -16,7 +16,7 @@ pybi-next is a BI visualization reporting library that uses intuitive and concis
 - Generate standalone HTML files that run seamlessly in browsers without requiring any dependencies.
 
  
-## 📦 安装
+## 📦 Installation
 
 Zero mode (for standalone HTML generation):
 
@@ -36,5 +36,5 @@ pip install pybi-next[webview] -U
 ```
 
 
-## 🖥️ 快速开始
+## 🖥️ Quick Start
 

@@ -72,6 +72,16 @@ def _dataframe_import_to_db(
 
 class Facade:
     def __call__(self, db: Path):
+        """
+        Create a DuckdbFileDataSet instance from a database file path.
+
+        Args:
+            db (Path): Path to the DuckDB database file.
+
+        Examples:
+        .. code-block:: python
+        ds = pybi.duckdb("path/to/database.db")
+        """
         self.db = db
         return DuckdbFileDataSet(db)
 
