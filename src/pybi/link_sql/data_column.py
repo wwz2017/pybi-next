@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, cast
 from instaui.vars.mixin_types.element_binding import ElementBindingMixin
 from instaui.vars.mixin_types.observable import ObservableMixin
 
@@ -25,7 +25,11 @@ class DataColumn(DataColumnMixin, ObservableMixin, ElementBindingMixin):
         return self._data_view
 
     def _to_element_binding_config(self) -> Dict:
-        return self._data_view.values()._to_element_binding_config()
+        return cast(
+            ElementBindingMixin, self._data_view.flat_values()
+        )._to_element_binding_config()
 
     def _to_observable_config(self):
-        return self._data_view.values()._to_observable_config()
+        return cast(
+            ObservableMixin, self._data_view.flat_values()
+        )._to_observable_config()

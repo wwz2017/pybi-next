@@ -21,7 +21,7 @@ def test_base(context: Context):
     Table(context).one_cell().should_see("18.5")
 
 
-def test_select_columns(context: Context):
+def test_selected_multiple_columns(context: Context):
     data = {"Name": ["foo"], "Age": [18], "class": [1]}
 
     dataset = pybi.duckdb.from_pandas({"df": pd.DataFrame(data)})
@@ -39,16 +39,41 @@ def test_select_columns(context: Context):
     table.one_cell().should_not_see("1")
 
 
-def test_select_column(context: Context):
-    data = {"Name": ["foo"], "Age": [18], "class": [1]}
+def test_computed_binding(context: Context):
+    data = {"Name": ["foo", "bar"], "Age": [18, 19]}
 
     dataset = pybi.duckdb.from_pandas({"df": pd.DataFrame(data)})
 
     @context.register_page
     def index():
         table = dataset["df"]
-        dv1 = pybi.data_view(f"SELECT * FROM {table}")
-        pybi.label(dv1["Name"])
+        dv = pybi.data_view(f"SELECT * FROM {table}")
+
+        @ui.computed(inputs=[dv])
+        def result(names):
+            return str(names)
+
+        pybi.label(result)
 
     context.open()
-    assert False
+    context.should_see("[['foo', 18], ['bar', 19]]", equal_to=True)
+
+
+def test_selected_column_computed_binding(context: Context):
+    data = {"Name": ["foo", "bar"]}
+
+    dataset = pybi.duckdb.from_pandas({"df": pd.DataFrame(data)})
+
+    @context.register_page
+    def index():
+        table = dataset["df"]
+        dv = pybi.data_view(f"SELECT * FROM {table}")
+
+        @ui.computed(inputs=[dv["Name"]])
+        def result(names):
+            return str(names)
+
+        pybi.label(result)
+
+    context.open()
+    context.should_see("['foo', 'bar']", equal_to=True)

@@ -1,6 +1,8 @@
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 from typing_extensions import overload
 from instaui import ui
+from instaui.vars.mixin_types.element_binding import ElementBindingMixin
+from instaui.vars.mixin_types.observable import ObservableMixin
 from pybi.link_sql._base import DataSourceElement
 from pybi.link_sql._mixin import CanGetitem
 from ._mixin import QueryableMixin, DataSetMixin
@@ -10,7 +12,7 @@ from .data_column import DataColumn
 from .query import QueryInfo
 
 
-class DataView(QueryableMixin):
+class DataView(QueryableMixin, ElementBindingMixin, ObservableMixin):
     def __init__(self, sql: str, *, dataset: Optional[DataSetMixin] = None) -> None:
         self._data_source_element = DataSourceElement()
         self.__sql = sql
@@ -88,8 +90,17 @@ class DataView(QueryableMixin):
     def result(self) -> CanGetitem:
         return self[[]].result
 
-    def flat_values(self) -> ui.TMaybeRef[List[Any]]:
+    def flat_values(self):
         return self[[]].flat_values()
+
+    def values(self):
+        return self[[]].values()
+
+    def _to_element_binding_config(self) -> Dict:
+        return self.values()._to_element_binding_config()
+
+    def _to_observable_config(self):
+        return self.values()._to_observable_config()
 
 
 def data_view(sql: str) -> DataView:

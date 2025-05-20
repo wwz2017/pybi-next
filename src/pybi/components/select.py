@@ -42,12 +42,14 @@ def select(
         inputs=[ui.event_context.e(), field, query_id],
         outputs=[element_ref],
         code=r"""(value,field,query_id) => {
-if (value) {
-return {method: 'addFilter', args:[{field, expr: `${field}= ?`,value,query_id}]};
+
+if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)){
+    return {method:'removeFilter', args:[{field,query_id}]};
 }
 
-return {method:'removeFilter', args:[{field,query_id}]};
-        }""",
+const realValue = Array.isArray(value)? value : [value];
+return {method: 'addFilter', args:[{field, expr: `${field} in ?`,value,query_id}]};
+}""",
     )
 
     return arco.select(options=source, value=value, **props).on_change(on_change)  # type: ignore
