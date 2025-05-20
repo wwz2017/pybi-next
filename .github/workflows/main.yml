@@ -12,7 +12,7 @@ jobs:
         python-version:
           - "3.8"
           - "3.10"
-          - "3.12"
+          - "3.11"
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -21,13 +21,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: "Set up Python"
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: ".python-version"
       - name: Install the project
         run: uv sync --locked --all-extras --dev
       - name: install dependencies
-        run: uv run -m playwright install 
+        run: uv run -m playwright install --with-deps
       - name: Run tests
         run: uv run pytest __tests
