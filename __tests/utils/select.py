@@ -102,3 +102,9 @@ class Select:
     def click_clear_btn(self):
         self.__page.locator(self.__target_selector).hover()
         self.__page.click(f"{self.__target_selector} {_CLEAR_BTN_SELECTOR}")
+
+    def should_not_selected_any(self):
+        self.open_options()
+        selected_items = self.__page.locator(_OPTIONS_ITEM_SELECTED_SELECTOR)
+        expect(selected_items).to_have_count(0)
+
