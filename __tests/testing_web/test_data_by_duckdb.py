@@ -3,7 +3,7 @@ from instaui import ui
 import pandas as pd
 import pybi
 from . import utils
-from .utils import Table
+from __tests.utils import Table
 
 
 def test_data_from_pandas(context: Context):
@@ -18,7 +18,7 @@ def test_data_from_pandas(context: Context):
 
     context.open()
 
-    Table(context).one_cell().should_see("foo")
+    Table(context).should_values_any_cell("foo")
 
 
 def test_data_from_db(context: Context):
@@ -33,4 +33,4 @@ def test_data_from_db(context: Context):
         pybi.table(table)
 
     context.open()
-    Table(context).one_cell().should_see("foo")
+    Table(context).should_values_any_cell("foo")
