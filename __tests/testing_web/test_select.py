@@ -21,7 +21,7 @@ def test_options(context: Context):
     select.should_options_have_count(2)
     select.should_options_have_text("foo", "bar")
 
-def test_NoOption_Selected(context: Context):
+def test_no_option_selected(context: Context):
     data = {"Name": ['foo', 'bar']}
     dataset = pybi.duckdb.from_pandas({"df": pd.DataFrame(data)})
 
