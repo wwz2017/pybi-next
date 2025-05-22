@@ -510,7 +510,7 @@ wheels = [
 
 [[package]]
 name = "instaui"
-version = "0.1.12"
+version = "0.1.13"
 source = { registry = "https://repo.huaweicloud.com/repository/pypi/simple/" }
 dependencies = [
     { name = "jinja2" },
@@ -520,9 +520,9 @@ dependencies = [
     { name = "pydantic", version = "2.11.4", source = { registry = "https://repo.huaweicloud.com/repository/pypi/simple/" }, marker = "python_full_version >= '3.9'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://repo.huaweicloud.com/repository/pypi/packages/64/30/0e4d6ecbdd61f0fd10039116a00eaa693b6986f6a0a6c41a985e6198b0f5/instaui-0.1.12.tar.gz", hash = "sha256:4fdf6348f77960d2199a0e0bd67112bae727a59f08b493c2e8cd4d52b6ac58d7" }
+sdist = { url = "https://repo.huaweicloud.com/repository/pypi/packages/9f/77/28c481596b8af9939f23f8458d94aa23114bb901fde5e590bd5aaf796d36/instaui-0.1.13.tar.gz", hash = "sha256:41303a007903b0096a81eb60234cf344ea81fb06ab800febdaa876a57472cad3" }
 wheels = [
-    { url = "https://repo.huaweicloud.com/repository/pypi/packages/81/74/a5d7b2edff58dabfd9aaeb99a0e986cdbb77b0b017efa3b3bbfaa43947ee/instaui-0.1.12-py3-none-any.whl", hash = "sha256:a7b47009a26dec5e2da81d24a2931f3713426996ac22c0cea394bf82feb3ce6c" },
+    { url = "https://repo.huaweicloud.com/repository/pypi/packages/6c/8c/b48a47ead6499f615d16e619cdb57a31c18d7cecb7cb5ff926d9f38d6f04/instaui-0.1.13-py3-none-any.whl", hash = "sha256:f93f216a0af0f58f0b544a45f41c548955b38c41f4d51354974b80128a3980fe" },
 ]
 
 [package.optional-dependencies]
