@@ -60,7 +60,7 @@ def test_selection_impact(context: Context):
 
     context.open()
     select = Select(context)
-    context.should_see("['foo','bar']", equal_to=True)
+    context.should_see("['foo', 'bar']", equal_to=True)
     select.select_item("foo")
     context.should_see("['foo']", equal_to=True)
     
