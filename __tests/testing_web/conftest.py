@@ -1,4 +1,3 @@
-from time import sleep
 import pytest
 from playwright.sync_api import Browser
 import duckdb
@@ -11,8 +10,6 @@ def context(browser: Browser, start_server: TestServer):
     page = browser.new_page()
     start_server.start()
     start_server.wait_for_connection()
-    # TODO
-    sleep(1)
 
     context = Context(start_server, page)
 
