@@ -2,7 +2,7 @@ from __tests.testing_web.context import Context
 from instaui import ui
 import pandas as pd
 import pybi
-from __tests.utils import Table
+from __tests.utils import Table, Select
 
 
 def test_base(context: Context):
@@ -19,6 +19,32 @@ def test_base(context: Context):
     context.open()
 
     Table(context).should_values_any_cell("18.5")
+
+
+def test_upstream_data_view_update_affects_downstream(context: Context):
+    data = {"Name": ["foo", "foo", "bar"], "Age": [18, 19, 20]}
+
+    dataset = pybi.duckdb.from_pandas({"df": pd.DataFrame(data)})
+
+    @context.register_page
+    def index():
+        table = dataset["df"]
+        dv1 = pybi.data_view(f"SELECT * FROM {table}")
+        dv2 = pybi.data_view(f"SELECT * FROM {dv1}")
+
+        pybi.select(dv1["Name"])
+        pybi.table(dv2)
+
+    context.open()
+
+    table = Table(context)
+    select = Select(context)
+
+    table.should_rows_count(3)
+    select.select_item("foo")
+    table.should_rows_count(2)
+    table.should_values_any_cell("foo")
+    table.should_values_not_any_cell("bar")
 
 
 def test_selected_multiple_columns(context: Context):
