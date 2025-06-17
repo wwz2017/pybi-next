@@ -1,22 +1,16 @@
-from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Dict, List
 from typing_extensions import TypedDict
 
 
-class TFilterInfo(TypedDict):
-    expr: str
-    value: Any
-
-
-TFilters = Dict[str, List[TFilterInfo]]
-
-
-class TQueryStrInfo(TypedDict):
+class TSqlMapValue(TypedDict):
     sql: str
-    params: List[Any]
+    filters: Dict
+    parents: List[str]
 
 
-@dataclass
-class DependencyInfo:
-    view_names: List[str]
-    filters: List
+TSqlMap = Dict[str, TSqlMapValue]
+
+
+class TExcludeFilter(TypedDict):
+    view_name: str
+    query_key: str

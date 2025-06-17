@@ -1,94 +1,91 @@
-from __future__ import annotations
-from typing import Dict, List, Optional, Union
-from typing_extensions import overload
-from instaui import ui
-from instaui.vars.web_computed import WebComputed
-from instaui.vars.mixin_types.observable import ObservableMixin
+import typing
 from instaui.vars.mixin_types.element_binding import ElementBindingMixin
+from instaui.vars.mixin_types.observable import ObservableMixin
+from pybi.link_sql import _mixin
+from pybi.link_sql.data_column import DataQueryColumn
+from pybi.link_sql.data_table import DataQueryTable
+from pybi.link_sql import _server_query
+from pybi.link_sql.data_view_store import get_store as _get_store
 
-from ._mixin import DataSetMixin, DataColumnMixin, QueryableMixin
-from .duckdb_utils import sql_query
-from pybi.link_sql.models import ExcludeFilterInfo
 
-
-class QueryInfo(ObservableMixin, ElementBindingMixin, QueryableMixin):
+class Query(
+    _mixin.QueryableMixin,
+    _mixin.QueryResultMixin,
+    ElementBindingMixin,
+    ObservableMixin,
+    _mixin.DataTableMixin,
+):
     def __init__(
-        self,
-        sql: str,
-        *,
-        dataset: Optional[DataSetMixin] = None,
-        exclude_info: Optional[ExcludeFilterInfo] = None,
+        self, sql: str, *, dataset: typing.Optional[_mixin.DataSetMixin] = None
     ) -> None:
-        self.__result_getter = _ready_result(
-            sql,
-            dataset=dataset,
-            exclude_info=exclude_info,
-        )
+        self.__sql = sql
+        self.__name = _get_store().gen_query(sql)
+        # self._dataset_id = self.__try_get_dataset_id(dataset, sql)
 
-        self.__sql_str = sql
+        self.__dataset_id = dataset.get_id() if dataset else None
+
+        self.__server_info = _server_query.create_source(
+            self.__name,
+            dataset_id=self.__dataset_id,
+        )
 
     @property
-    def result(self):
-        return self.__result_getter()
+    def name(self) -> str:
+        return self.__name
 
-    def flat_values(self):
-        return ui.js_computed(
-            inputs=[self.result],
-            code=r"""result=>{
-    const values = result.values;
-    return values.flat();
-}""",
-        )
+    def _to_sql(self):
+        return self.__sql
 
-    def values(self):
-        return self.result["values"]
+    @typing.overload
+    def __getitem__(self, field: typing.List[str]) -> _mixin.DataTableMixin: ...
 
-    def columns(self):
-        return self.result["columns"]
-
-    def _to_observable_config(self):
-        return self.values()._to_observable_config()
-
-    def _to_element_binding_config(self) -> Dict:
-        return self.values()._to_element_binding_config()
-
-    def _to_sql(self) -> ui.TMaybeRef[str]:
-        raise NotImplementedError
-
-    @overload
-    def __getitem__(self, field: List[str]) -> QueryInfo: ...
-
-    @overload
-    def __getitem__(self, field: str) -> DataColumnMixin: ...
+    @typing.overload
+    def __getitem__(self, field: str) -> _mixin.DataColumnMixin: ...
 
     def __getitem__(
-        self, field: Union[str, List[str]]
-    ) -> Union[DataColumnMixin, QueryInfo]:
+        self, field: typing.Union[str, typing.List[str]]
+    ) -> typing.Union[_mixin.DataColumnMixin, _mixin.DataTableMixin]:
         if isinstance(field, str):
-            field = [field]
+            return DataQueryColumn(self.__name, field)
 
-        select_stem = ", ".join(field) if field else "*"
-        return QueryInfo(f"SELECT {select_stem} FROM ({self})")
+        elif isinstance(field, list):
+            return DataQueryTable(self, field)
+
+        raise ValueError(f"Invalid field type: {type(field)}")
+
+    def flat_values(
+        self,
+    ):
+        return self.__server_info.flat_values()
+
+    def _to_observable_config(self):
+        return self.__server_info.source._to_observable_config()
+
+    def _to_element_binding_config(self) -> typing.Dict:
+        return self.__server_info.source._to_element_binding_config()
 
     def __str__(self) -> str:
-        return self.__sql_str
+        return self.__name
+
+    def get_query_name(self) -> str:
+        return self.__name
+
+    @property
+    def source_name(self) -> str:
+        return self.__name
+
+    @property
+    def dataset_id(self) -> typing.Optional[int]:
+        return self.__dataset_id
+
+    def get_source_type(self):
+        return "query"
+
+    def values(self):
+        return self.__server_info.flat_values()
+
+    def columns(self):
+        return self.__server_info.columns()
 
 
-def _ready_result(
-    sql: str,
-    *,
-    dataset: Optional[DataSetMixin] = None,
-    exclude_info: Optional[ExcludeFilterInfo] = None,
-):
-    result = None
-
-    def fn() -> WebComputed:
-        nonlocal result
-        if result is None:
-            result = sql_query(sql, dataset=dataset, exclude_info=exclude_info)
-        return result
-
-    return fn
-
-
-query = QueryInfo
+query = Query
