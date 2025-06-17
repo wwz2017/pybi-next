@@ -1,21 +1,17 @@
-# 贡献指南
 
+## Development Environment
 
-## 开发环境
+This project uses `uv` as the package management tool. Please ensure that you have `uv` installed and configured in your environment variables.
 
-本项目使用 `uv` 作为包管理工具，请确保你已安装 `uv` 并配置好环境变量。
-
-安装环境
+Set Up the Environment
 
 ```bash
 uv sync --group dev --group lint --group git
 ```
 
+## Code Style
 
-
-## 代码风格
-
-安装并运行 `pre-commit` ：
+Install and run `pre-commit`:
 
 ```bash
 pre-commit install
