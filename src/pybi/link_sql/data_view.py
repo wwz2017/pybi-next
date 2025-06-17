@@ -1,106 +1,102 @@
-from typing import Any, Dict, List, Optional, Union, cast
+from __future__ import annotations
+from typing import Dict, List, Optional, Union
 from typing_extensions import overload
-from instaui import ui
 from instaui.vars.mixin_types.element_binding import ElementBindingMixin
 from instaui.vars.mixin_types.observable import ObservableMixin
-from pybi.link_sql._base import DataSourceElement
-from pybi.link_sql._mixin import CanGetitem
-from ._mixin import QueryableMixin, DataSetMixin
-from .data_view_store import DataViewStore
-from . import _utils
-from .data_column import DataColumn
-from .query import QueryInfo
+from pybi.link_sql import sql_stem
+from pybi.link_sql.data_column import DataViewColumn
+from pybi.link_sql.data_table import DataViewTable
+from pybi.link_sql.data_view_store import get_store as _get_store
+from pybi.link_sql import _server_query
 
 
-class DataView(QueryableMixin, ElementBindingMixin, ObservableMixin):
-    def __init__(self, sql: str, *, dataset: Optional[DataSetMixin] = None) -> None:
-        self._data_source_element = DataSourceElement()
+from pybi.link_sql._mixin import (
+    DataColumnMixin,
+    QueryableMixin,
+    DataSetMixin,
+    DataTableMixin,
+)
+
+
+class DataView(QueryableMixin, ElementBindingMixin, ObservableMixin, DataTableMixin):
+    def __init__(self, sql: str, *, dataset: Optional[DataSetMixin] = None):
         self.__sql = sql
-        self.str_name = DataViewStore.get().store_view(sql, self)
-        self.name = ui.data(self.str_name)
 
-        self._dataset_id = self.__get_dataset_id(dataset, sql)
+        self._dataset_id = self.__try_get_dataset_id(dataset, sql)
+        self.__name = _get_store().gen_view(sql, self._dataset_id)
 
-    def __get_dataset_id(self, dataset: Optional[DataSetMixin], sql: str):
-        if dataset is not None:
-            return dataset.get_id()
-
-        upstream_views = [
-            DataViewStore.get().get_data_view(name)
-            for name in _utils.extract_special_tags(sql)
-        ]
-
-        for view in upstream_views:
-            if view._dataset_id is not None:
-                return view._dataset_id
-
-        return None
-
-    def _get_filters(self, *, exclude_query_key: Optional[str] = None):
-        if exclude_query_key is None:
-            return self._data_source_element.filters
-
-        filters_without_key = ui.js_computed(
-            inputs=[self._data_source_element.filters, exclude_query_key],
-            deep_compare_on_input=True,
-            code=r"""(filters, exclude_query_key) =>{
- const new_filters = {...filters};
- delete new_filters[exclude_query_key];
- return   new_filters         
-}""",
+        self.__source = _server_query.create_source(
+            self.__name,
+            dataset_id=self._dataset_id,
         )
-        return filters_without_key
+
+    def __try_get_dataset_id(self, dataset: Optional[DataSetMixin], sql: str):
+        if dataset is None:
+            for name in sql_stem.iter_extract_names(sql):
+                if sql_stem.get_source_type(name) == "view":
+                    return _get_store().get_view_dataset_id(name)
+
+            raise ValueError("dataset is None and no view found in sql")
+
+        return dataset.get_id()
 
     @property
-    def sql_str(self):
-        return self.__sql
-
-    def _to_sql(self) -> ui.TMaybeRef[str]:
-        return ui.js_computed(inputs=[self.__sql], code="sql => sql")
-
-    def __str__(self) -> str:
-        return self.str_name
-
-    def to_sql(self):
-        return self._to_sql()
-
-    @overload
-    def __getitem__(self, field: List[str]) -> QueryInfo: ...
-
-    @overload
-    def __getitem__(self, field: str) -> DataColumn: ...
-
-    def __getitem__(self, field: Union[str, List[str]]) -> Union[DataColumn, QueryInfo]:
-        if isinstance(field, str):
-            return DataColumn(self, field)
-
-        select_stem = ", ".join(field) if field else "*"
-        return QueryInfo(f"SELECT {select_stem} FROM {self}")
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, DataView):
-            return False
-
-        return self.str_name == other.str_name
-
-    def __hash__(self) -> int:
-        return hash(self.str_name)
+    def name(self) -> str:
+        return self.__name
 
     @property
-    def result(self) -> CanGetitem:
-        return self[[]].result
-
-    def flat_values(self):
-        return self[[]].flat_values()
-
-    def values(self):
-        return self[[]].values()
-
-    def _to_element_binding_config(self) -> Dict:
-        return self.values()._to_element_binding_config()
+    def dataset_id(self) -> int:
+        return self._dataset_id
 
     def _to_observable_config(self):
-        return self.values()._to_observable_config()
+        return self.__source.source._to_observable_config()
+
+    def _to_element_binding_config(self) -> Dict:
+        return self.__source.source._to_element_binding_config()
+
+    def _to_sql(
+        self,
+    ):
+        return self.__sql
+
+    @overload
+    def __getitem__(self, field: List[str]) -> DataTableMixin: ...
+
+    @overload
+    def __getitem__(self, field: str) -> DataColumnMixin: ...
+
+    def __getitem__(
+        self, field: str | List[str]
+    ) -> Union[DataColumnMixin, DataTableMixin]:
+        if isinstance(field, str):
+            return DataViewColumn(self.__name, field)
+
+        elif isinstance(field, list):
+            return DataViewTable(self, field)
+
+        raise ValueError("field must be str or list[str]")
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_query_name(self) -> str:
+        return self.name
+
+    @property
+    def source_name(self) -> str:
+        return self.__name
+
+    def get_source_type(self):
+        return "view"
+
+    def flat_values(self):
+        return self.__source.flat_values()
+
+    def values(self):
+        return self.__source.values()
+
+    def columns(self):
+        return self.__source.columns()
 
 
 def data_view(sql: str) -> DataView:

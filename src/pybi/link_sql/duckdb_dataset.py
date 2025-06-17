@@ -2,9 +2,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from pybi.link_sql import data_set_store
-from pybi.link_sql._mixin import DataSetMixin, DataSetQueryInfo
-from .data_view import DataView
-
+from pybi.link_sql._mixin import DataSetMixin
+from pybi.link_sql.data_view import DataView
 
 try:
     import pandas
@@ -14,11 +13,14 @@ except ImportError as e:
 
 
 class DuckdbDataFrameDataSet(DataSetMixin):
-    def __init__(self, dataframes: Dict[str, "pandas.DataFrame"]):
+    def __init__(self, dataframes: Optional[Dict[str, "pandas.DataFrame"]] = None):
         super().__init__()
         self._conn = duckdb.connect(":default:", read_only=False)
         self._id = data_set_store.store_data_set(self)
 
+        self.import_dataframe(dataframes or {})
+
+    def import_dataframe(self, dataframes: Dict[str, "pandas.DataFrame"]):
         for name, df in dataframes.items():
             _dataframe_import_to_db(self._conn, df, name)
 
@@ -29,13 +31,7 @@ class DuckdbDataFrameDataSet(DataSetMixin):
         return DataView(f"select * from {table}", dataset=self)
 
     def query(self, sql: str, params: Optional[List] = None):
-        local_con = self._conn.cursor()
-
-        query = local_con.sql(sql, params=params)
-        columns = query.columns
-        values = query.fetchall()
-
-        return DataSetQueryInfo(columns=columns, values=values)
+        return _query(self._conn, sql, params)
 
 
 class DuckdbFileDataSet(DataSetMixin):
@@ -51,16 +47,7 @@ class DuckdbFileDataSet(DataSetMixin):
         return DataView(f"select * from {table}", dataset=self)
 
     def query(self, sql: str, params: Optional[List] = None):
-        local_con = self._conn.cursor()
-
-        try:
-            query = local_con.sql(sql, params=params)
-            columns = query.columns
-            values = query.fetchall()
-        except duckdb.ParserException as e:
-            raise ValueError(f"Invalid SQL: {sql}") from e
-
-        return DataSetQueryInfo(columns=columns, values=values)
+        return _query(self._conn, sql, params)
 
 
 def _dataframe_import_to_db(
@@ -68,6 +55,22 @@ def _dataframe_import_to_db(
 ):
     cursor = conn.cursor()
     cursor.execute(f"create table if not exists {table_name} as select * from df")
+
+
+def _query(conn: duckdb.DuckDBPyConnection, sql: str, params: Optional[List] = None):
+    local_con = conn.cursor()
+
+    try:
+        query = local_con.sql(sql, params=params)
+        columns = query.columns
+        values = query.fetchall()
+    except duckdb.ParserException as e:
+        raise ValueError(f"Invalid SQL:{e}. {sql=} , {params=}") from e
+
+    return {
+        "columns": columns,
+        "values": values,
+    }
 
 
 class Facade:
@@ -87,9 +90,9 @@ class Facade:
 
     @classmethod
     def from_pandas(
-        cls, dataframes_map: Dict[str, "pandas.DataFrame"]
+        cls, dataframes_map: Optional[Dict[str, "pandas.DataFrame"]] = None
     ) -> DuckdbDataFrameDataSet:
-        ds = DuckdbDataFrameDataSet(dataframes_map)
+        ds = DuckdbDataFrameDataSet(dataframes_map or {})
         return ds
 
 
