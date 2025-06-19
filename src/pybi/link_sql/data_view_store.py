@@ -1,5 +1,6 @@
 from __future__ import annotations
 from contextvars import ContextVar
+from pathlib import Path
 from typing import Any, Dict, Optional
 from instaui import ui
 from instaui.components.element import Element
@@ -9,6 +10,10 @@ from pybi.link_sql import _types
 
 
 _TViewName = str
+
+_GROUP_FN_JS_CODE = (Path(__file__).parent / "static/group_fn.js").read_text(
+    encoding="utf-8"
+)
 
 
 class Store(Element, esm="./data_view_store.js"):
@@ -47,6 +52,12 @@ class Store(Element, esm="./data_view_store.js"):
         self._remove_filters_js_handler = ui.js_fn(r"""(filters, query_key)=> {
             return {method: 'removeFilter', args: [filters, query_key]}
     }""")
+
+        self._group_fn_js_handler = ui.js_fn(_GROUP_FN_JS_CODE)
+        """
+        Example:
+            group_fn(data, 0)
+        """
 
     @property
     def server_sql_map(self):

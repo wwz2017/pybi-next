@@ -121,3 +121,7 @@ def _sql_with_filters(
         return sql
 
     return f"SELECT * FROM ({sql}){where_stem}"
+
+
+def escape_field_name(name: str):
+    return f'"{name}"'
